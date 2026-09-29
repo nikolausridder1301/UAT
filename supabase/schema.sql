@@ -11,7 +11,8 @@ create table if not exists issues (
   why text,
   owner text not null,
   resolved boolean not null default false,
-  screenshot_urls text[] not null default '{}'
+  screenshot_urls text[] not null default '{}',
+  agent text not null default 'COM'
 );
 
 -- Row Level Security aktivieren

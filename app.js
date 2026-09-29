@@ -12,6 +12,7 @@ const els = {
   fieldIssue: document.getElementById("fieldIssue"),
   fieldWhy: document.getElementById("fieldWhy"),
   fieldOwner: document.getElementById("fieldOwner"),
+  fieldAgent: document.getElementById("fieldAgent"),
   fieldResolved: document.getElementById("fieldResolved"),
   pasteZone: document.getElementById("pasteZone"),
   fileInput: document.getElementById("fileInput"),
@@ -19,9 +20,15 @@ const els = {
   submitBtn: document.getElementById("submitBtn"),
   lightbox: document.getElementById("lightbox"),
   lightboxImg: document.getElementById("lightboxImg"),
+  filterReportedBy: document.getElementById("filterReportedBy"),
+  filterOwner: document.getElementById("filterOwner"),
+  filterAgent: document.getElementById("filterAgent"),
+  filterResolved: document.getElementById("filterResolved"),
+  filterResetBtn: document.getElementById("filterResetBtn"),
 };
 
 let pendingFiles = []; // File objects staged for upload on submit
+let allIssues = []; // zuletzt geladene Eintraege, ungefiltert
 
 function populateNameDropdowns() {
   for (const select of [els.fieldReportedBy, els.fieldOwner]) {
@@ -32,6 +39,27 @@ function populateNameDropdowns() {
       opt.textContent = name;
       select.appendChild(opt);
     }
+  }
+
+  els.fieldAgent.innerHTML = "";
+  for (const agent of AGENT_OPTIONS) {
+    const opt = document.createElement("option");
+    opt.value = agent;
+    opt.textContent = agent;
+    els.fieldAgent.appendChild(opt);
+  }
+
+  appendOptions(els.filterReportedBy, TEAM_NAMES);
+  appendOptions(els.filterOwner, TEAM_NAMES);
+  appendOptions(els.filterAgent, AGENT_OPTIONS);
+}
+
+function appendOptions(select, values) {
+  for (const value of values) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    select.appendChild(opt);
   }
 }
 
@@ -118,24 +146,47 @@ async function loadIssues() {
       .order("id", { ascending: true });
 
     if (error) {
-      els.tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">Fehler beim Laden: ${escapeHtml(error.message)}</td></tr>`;
+      els.tableBody.innerHTML = `<tr><td colspan="10" class="empty-state">Fehler beim Laden: ${escapeHtml(error.message)}</td></tr>`;
       return;
     }
 
-    renderTable(data);
+    allIssues = data || [];
+    applyFilters();
   } catch (err) {
-    els.tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?</td></tr>`;
+    els.tableBody.innerHTML = `<tr><td colspan="10" class="empty-state">Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?</td></tr>`;
   }
+}
+
+function applyFilters() {
+  const reportedBy = els.filterReportedBy.value;
+  const owner = els.filterOwner.value;
+  const agent = els.filterAgent.value;
+  const resolved = els.filterResolved.value;
+
+  const filtered = allIssues.filter((row) => {
+    if (reportedBy && row.reported_by !== reportedBy) return false;
+    if (owner && row.owner !== owner) return false;
+    if (agent && row.agent !== agent) return false;
+    if (resolved === "open" && row.resolved) return false;
+    if (resolved === "resolved" && !row.resolved) return false;
+    return true;
+  });
+
+  renderTable(filtered);
 }
 
 function renderTable(rows) {
   const countEl = document.getElementById("entryCount");
   if (countEl) {
-    countEl.textContent = rows && rows.length ? `${rows.length} Einträge` : "";
+    const suffix = rows.length !== allIssues.length ? ` von ${allIssues.length}` : "";
+    countEl.textContent = allIssues.length ? `${rows.length}${suffix} Einträge` : "";
   }
 
   if (!rows || rows.length === 0) {
-    els.tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">Noch keine Einträge. Klicke oben auf "+ Neuer Eintrag".</td></tr>`;
+    const message = allIssues.length
+      ? "Keine Einträge für diese Filter."
+      : 'Noch keine Einträge. Klicke oben auf "+ New Issue".';
+    els.tableBody.innerHTML = `<tr><td colspan="10" class="empty-state">${message}</td></tr>`;
     return;
   }
 
@@ -148,6 +199,7 @@ function renderTable(rows) {
     tr.appendChild(td(row.reported_by));
     tr.appendChild(tdText(row.issue_explained));
     tr.appendChild(tdText(row.why));
+    tr.appendChild(td(row.agent));
     tr.appendChild(tdThumbs(row.screenshot_urls || []));
     tr.appendChild(tdResolved(row));
     tr.appendChild(td(row.owner));
@@ -251,6 +303,7 @@ async function handleSubmit(event) {
       issue_explained: els.fieldIssue.value,
       why: els.fieldWhy.value,
       owner: els.fieldOwner.value,
+      agent: els.fieldAgent.value,
       resolved: els.fieldResolved.checked,
       screenshot_urls: screenshotUrls,
     });
@@ -318,6 +371,17 @@ function initEvents() {
   });
 
   els.lightbox.addEventListener("click", closeLightbox);
+
+  for (const filterEl of [els.filterReportedBy, els.filterOwner, els.filterAgent, els.filterResolved]) {
+    filterEl.addEventListener("change", applyFilters);
+  }
+  els.filterResetBtn.addEventListener("click", () => {
+    els.filterReportedBy.value = "";
+    els.filterOwner.value = "";
+    els.filterAgent.value = "";
+    els.filterResolved.value = "";
+    applyFilters();
+  });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {

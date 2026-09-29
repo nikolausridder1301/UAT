@@ -20,18 +20,27 @@
 </div>
 
 <div class="app">
-  <header class="app-header panel">
-    <div class="header-title">
-      <div>
-        <h1>UAT Issue Log</h1>
-        <p class="subtitle">Issue Tracking</p>
-      </div>
-    </div>
-    <button id="openFormBtn" class="btn primary">+ Neuer Eintrag</button>
-  </header>
-
   <div class="toolbar">
     <span class="meta-label" id="entryCount"></span>
+    <button id="openFormBtn" class="btn primary">+ New Issue</button>
+  </div>
+
+  <div class="filter-bar">
+    <select id="filterReportedBy">
+      <option value="">Reported by: Alle</option>
+    </select>
+    <select id="filterOwner">
+      <option value="">Owner: Alle</option>
+    </select>
+    <select id="filterAgent">
+      <option value="">Agent: Alle</option>
+    </select>
+    <select id="filterResolved">
+      <option value="">Resolved: Alle</option>
+      <option value="open">Nur offen</option>
+      <option value="resolved">Nur resolved</option>
+    </select>
+    <button type="button" id="filterResetBtn" class="btn icon" title="Filter zurücksetzen">Filter zurücksetzen</button>
   </div>
 
   <div class="table-wrap">
@@ -43,6 +52,7 @@
           <th>Reported by</th>
           <th>Issue Explained</th>
           <th>Why?</th>
+          <th>Agent</th>
           <th>Screenshots</th>
           <th>Resolved</th>
           <th>Owner</th>
@@ -50,7 +60,7 @@
         </tr>
       </thead>
       <tbody id="issueTableBody">
-        <tr><td colspan="9" class="empty-state">Lade Einträge…</td></tr>
+        <tr><td colspan="10" class="empty-state">Lade Einträge…</td></tr>
       </tbody>
     </table>
   </div>
@@ -92,6 +102,11 @@
       <div class="field">
         <label for="fieldOwner">Owner</label>
         <select id="fieldOwner" required></select>
+      </div>
+
+      <div class="field">
+        <label for="fieldAgent">Agent</label>
+        <select id="fieldAgent" required></select>
       </div>
 
       <div class="field">

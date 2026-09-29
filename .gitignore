@@ -1,0 +1,5 @@
+# Geheime Zugangsdaten - niemals committen
+.env
+.env.*
+supabase/.env
+secrets/
