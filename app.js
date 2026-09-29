@@ -270,18 +270,29 @@ function renderTable(rows) {
 
     tr.appendChild(td(row.id));
     tr.appendChild(td(formatDate(row.date)));
-    tr.appendChild(td(row.reported_by));
+    tr.appendChild(tdName(row.reported_by));
     tr.appendChild(tdText(row.issue_explained));
     tr.appendChild(tdText(row.why));
     tr.appendChild(td(row.agent));
     tr.appendChild(tdThumbs(row.screenshot_urls || []));
-    tr.appendChild(td(row.owner));
+    tr.appendChild(tdName(row.owner));
     tr.appendChild(tdStatus(row));
     tr.appendChild(tdText(row.resolution_comment));
     tr.appendChild(tdDelete(row.id));
 
     els.tableBody.appendChild(tr);
   }
+}
+
+function firstName(fullName) {
+  return fullName ? fullName.split(" ")[0] : "";
+}
+
+function tdName(fullName) {
+  const cell = document.createElement("td");
+  cell.textContent = firstName(fullName);
+  if (fullName) cell.title = fullName;
+  return cell;
 }
 
 function td(text) {
@@ -336,7 +347,8 @@ function tdStatus(row) {
 
   const meta = document.createElement("div");
   meta.className = "status-meta";
-  meta.textContent = `${row.resolved_by || "?"} · ${formatDateTime(row.resolved_at)}`;
+  meta.textContent = `${firstName(row.resolved_by) || "?"} · ${formatDateTime(row.resolved_at)}`;
+  if (row.resolved_by) meta.title = row.resolved_by;
   wrap.appendChild(meta);
 
   const reopenBtn = document.createElement("button");
@@ -352,9 +364,12 @@ function tdStatus(row) {
 
 function tdDelete(id) {
   const cell = document.createElement("td");
+  cell.className = "delete-cell";
   const btn = document.createElement("button");
+  btn.type = "button";
   btn.className = "delete-btn";
-  btn.textContent = "🗑";
+  btn.innerHTML =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
   btn.title = "Delete entry";
   btn.addEventListener("click", async () => {
     if (!confirm("Really delete this entry?")) return;
