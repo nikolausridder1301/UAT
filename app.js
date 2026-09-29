@@ -121,7 +121,7 @@ function buildEditBodyHtml(row) {
 
   if (row.status === "resolved") {
     html += '<span class="status-badge resolved">Resolved</span>';
-    html += `<span class="status-badge neutral">${escapeHtml(firstName(row.resolved_by) || "?")} · ${formatDateTime(row.resolved_at)}</span>`;
+    html += `<span class="status-badge neutral">${resolvedMetaLines(row)}</span>`;
     if (row.resolution_comment) {
       html += `<div class="cell-text edit-meta">${escapeHtml(row.resolution_comment)}</div>`;
     }
@@ -467,7 +467,7 @@ function tdStatusBadge(row) {
 
     const meta = document.createElement("span");
     meta.className = "status-badge neutral";
-    meta.textContent = `${firstName(row.resolved_by) || "?"} · ${formatDateTime(row.resolved_at)}`;
+    meta.innerHTML = resolvedMetaLines(row);
     if (row.resolved_by) meta.title = row.resolved_by;
     wrap.appendChild(meta);
   } else if (row.status === "in_progress") {
@@ -513,6 +513,11 @@ function formatDateTime(isoDateTime) {
   const d = new Date(isoDateTime);
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function resolvedMetaLines(row) {
+  const [datePart, timePart] = formatDateTime(row.resolved_at).split(" ");
+  return [escapeHtml(firstName(row.resolved_by) || "?"), datePart, timePart].join("<br>");
 }
 
 function escapeHtml(str) {
