@@ -276,9 +276,9 @@ function renderTable(rows) {
     tr.appendChild(td(row.agent));
     tr.appendChild(tdThumbs(row.screenshot_urls || []));
     tr.appendChild(tdName(row.owner));
-    tr.appendChild(tdStatus(row));
+    tr.appendChild(tdStatusBadge(row));
     tr.appendChild(tdText(row.resolution_comment));
-    tr.appendChild(tdDelete(row.id));
+    tr.appendChild(tdActions(row));
 
     els.tableBody.appendChild(tr);
   }
@@ -324,63 +324,79 @@ function tdThumbs(urls) {
   return cell;
 }
 
-function tdStatus(row) {
+function tdStatusBadge(row) {
   const cell = document.createElement("td");
-
-  if (!row.resolved) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn";
-    btn.textContent = "Resolve";
-    btn.addEventListener("click", () => openResolveForm(row));
-    cell.appendChild(btn);
-    return cell;
-  }
-
   const wrap = document.createElement("div");
   wrap.className = "status-cell";
 
   const badge = document.createElement("span");
-  badge.className = "status-badge resolved";
-  badge.textContent = "Resolved";
-  wrap.appendChild(badge);
+  if (row.resolved) {
+    badge.className = "status-badge resolved";
+    badge.textContent = "Resolved";
+    wrap.appendChild(badge);
 
-  const meta = document.createElement("div");
-  meta.className = "status-meta";
-  meta.textContent = `${firstName(row.resolved_by) || "?"} · ${formatDateTime(row.resolved_at)}`;
-  if (row.resolved_by) meta.title = row.resolved_by;
-  wrap.appendChild(meta);
-
-  const reopenBtn = document.createElement("button");
-  reopenBtn.type = "button";
-  reopenBtn.className = "reopen-link";
-  reopenBtn.textContent = "Reopen";
-  reopenBtn.addEventListener("click", () => reopenIssue(row.id));
-  wrap.appendChild(reopenBtn);
+    const meta = document.createElement("div");
+    meta.className = "status-meta";
+    meta.textContent = `${firstName(row.resolved_by) || "?"} · ${formatDateTime(row.resolved_at)}`;
+    if (row.resolved_by) meta.title = row.resolved_by;
+    wrap.appendChild(meta);
+  } else {
+    badge.className = "status-badge offen";
+    badge.textContent = "Open";
+    wrap.appendChild(badge);
+  }
 
   cell.appendChild(wrap);
   return cell;
 }
 
-function tdDelete(id) {
-  const cell = document.createElement("td");
-  cell.className = "delete-cell";
+const ICON_CHECK =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const ICON_REOPEN =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+const ICON_DELETE =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
+function iconButton(icon, title, extraClass, onClick) {
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.className = "delete-btn";
-  btn.innerHTML =
-    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
-  btn.title = "Delete entry";
-  btn.addEventListener("click", async () => {
-    if (!confirm("Really delete this entry?")) return;
-    const { error } = await supabaseClient.from("issues").delete().eq("id", id);
-    if (error) {
-      alert("Delete failed: " + error.message);
-      return;
-    }
-    loadIssues();
-  });
-  cell.appendChild(btn);
+  btn.className = `icon-action-btn ${extraClass}`;
+  btn.innerHTML = icon;
+  btn.title = title;
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+function tdActions(row) {
+  const cell = document.createElement("td");
+  cell.className = "delete-cell";
+
+  const wrap = document.createElement("div");
+  wrap.className = "actions-group";
+
+  if (row.resolved) {
+    wrap.appendChild(
+      iconButton(ICON_REOPEN, "Reopen issue", "reopen-btn", () => reopenIssue(row.id))
+    );
+  } else {
+    wrap.appendChild(
+      iconButton(ICON_CHECK, "Resolve issue", "resolve-btn", () => openResolveForm(row))
+    );
+  }
+
+  wrap.appendChild(
+    iconButton(ICON_DELETE, "Delete entry", "delete-btn", async () => {
+      if (!confirm("Really delete this entry?")) return;
+      const { error } = await supabaseClient.from("issues").delete().eq("id", row.id);
+      if (error) {
+        alert("Delete failed: " + error.message);
+        return;
+      }
+      loadIssues();
+    })
+  );
+
+  cell.appendChild(wrap);
   return cell;
 }
 
