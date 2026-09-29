@@ -142,7 +142,7 @@ async function openDetailModal(row) {
     .eq("issue_id", row.id)
     .order("created_at", { ascending: false });
 
-  els.detailBody.innerHTML = buildDetailBodyHtml(row, error ? [] : history || []);
+  els.detailBody.innerHTML = buildDetailBodyHtml(row, completeHistory(row, error ? [] : history || []));
 
   const thumbsWrap = document.getElementById("detailThumbs");
   if (thumbsWrap) {
@@ -158,6 +158,25 @@ async function openDetailModal(row) {
 function closeDetailModal() {
   els.detailOverlay.classList.add("hidden");
   els.detailBody.innerHTML = "";
+}
+
+function completeHistory(row, history) {
+  const entries = [...history];
+
+  if (!entries.some((h) => h.event === "created")) {
+    entries.push({ event: "created", actor: row.reported_by, comment: null, created_at: row.created_at });
+  }
+
+  if (row.status === "resolved" && !entries.some((h) => h.event === "resolved")) {
+    entries.push({
+      event: "resolved",
+      actor: row.resolved_by,
+      comment: row.resolution_comment,
+      created_at: row.resolved_at,
+    });
+  }
+
+  return entries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
 function detailField(label, value) {
