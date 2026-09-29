@@ -200,6 +200,11 @@ tbody tr:hover { background: #fafbfc; }
   word-break: break-word;
 }
 
+.cell-link {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .cell-text.truncatable {
   display: -webkit-box;
   -webkit-box-orient: vertical;

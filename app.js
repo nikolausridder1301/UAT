@@ -391,6 +391,13 @@ function td(text) {
   return cell;
 }
 
+function linkify(escapedText) {
+  return escapedText.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="cell-link">${url}</a>`
+  );
+}
+
 function tdText(text) {
   const cell = document.createElement("td");
   const span = document.createElement("div");
@@ -398,11 +405,14 @@ function tdText(text) {
   const isLong = value.length > 150 || (value.match(/\n/g) || []).length > 2;
 
   span.className = isLong ? "cell-text truncatable" : "cell-text";
-  span.textContent = value;
+  span.innerHTML = linkify(escapeHtml(value));
 
   if (isLong) {
     span.title = "Click to expand";
-    span.addEventListener("click", () => span.classList.toggle("expanded"));
+    span.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      span.classList.toggle("expanded");
+    });
   }
 
   cell.appendChild(span);
