@@ -262,6 +262,12 @@ tbody tr:hover { background: #fafbfc; }
   text-align: center;
 }
 
+.actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .icon-action-btn {
   display: inline-flex;
   align-items: center;
@@ -280,6 +286,12 @@ tbody tr:hover { background: #fafbfc; }
   background: var(--accent-bg);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.icon-action-btn.comment-btn:hover {
+  background: var(--lila-bg);
+  border-color: var(--lila-text);
+  color: var(--lila-text);
 }
 
 /* ---------- Formular / Modal ---------- */
@@ -417,6 +429,74 @@ tbody tr:hover { background: #fafbfc; }
   margin-top: 0.2rem;
   white-space: pre-wrap;
 }
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-height: 40vh;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.comment-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.85rem;
+  background: var(--surface);
+}
+
+.comment-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.comment-author { font-weight: 600; font-size: 0.85rem; }
+
+.comment-time {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.comment-text { font-size: 0.88rem; white-space: pre-wrap; word-break: break-word; }
+
+.comment-replies {
+  margin-top: 0.7rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.comment-reply-link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-top: 0.4rem;
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.comment-reply-link:hover { text-decoration: underline; }
+
+.reply-form {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reply-form select,
+.reply-form textarea { font-size: 0.85rem; }
+
+.comments-empty { color: var(--text-muted); font-size: 0.88rem; }
 
 .field { margin-bottom: 1.4rem; }
 

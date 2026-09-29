@@ -29,14 +29,31 @@ create table if not exists issue_history (
   created_at timestamptz not null default now()
 );
 
+-- Kommentare pro Issue (eine Antwort-Ebene)
+create table if not exists issue_comments (
+  id bigint generated always as identity primary key,
+  issue_id bigint not null references issues(id) on delete cascade,
+  parent_id bigint references issue_comments(id) on delete cascade,
+  author text not null,
+  comment text not null,
+  created_at timestamptz not null default now()
+);
+
 -- Row Level Security aktivieren
 alter table issues enable row level security;
 alter table issue_history enable row level security;
+alter table issue_comments enable row level security;
 
 create policy "Public read history" on issue_history
   for select using (true);
 
 create policy "Public insert history" on issue_history
+  for insert with check (true);
+
+create policy "Public read comments" on issue_comments
+  for select using (true);
+
+create policy "Public insert comments" on issue_comments
   for insert with check (true);
 
 -- Offener Zugriff (kein Login): jeder mit dem Link darf lesen, hinzufuegen,

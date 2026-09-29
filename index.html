@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=25" />
+<link rel="stylesheet" href="style.css?v=26" />
 </head>
 <body>
 
@@ -192,8 +192,32 @@
   </div>
 </div>
 
+<!-- Comments Modal -->
+<div id="commentsOverlay" class="overlay hidden">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="commentsTitle">Comments</h2>
+      <button id="closeCommentsBtn" class="btn icon">✕</button>
+    </div>
+    <div id="commentsList" class="comments-list"></div>
+    <form id="commentForm">
+      <div class="field">
+        <label for="commentAuthor">Who am I?</label>
+        <select id="commentAuthor" required></select>
+      </div>
+      <div class="field">
+        <label for="commentText">Comment</label>
+        <textarea id="commentText" rows="3" required placeholder="Write a comment…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn primary" id="commentSubmitBtn">Post Comment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="config.js?v=25" defer></script>
-<script src="app.js?v=25" defer></script>
+<script src="config.js?v=26" defer></script>
+<script src="app.js?v=26" defer></script>
 </body>
 </html>

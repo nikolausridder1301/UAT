@@ -38,7 +38,17 @@ const els = {
   detailBody: document.getElementById("detailBody"),
   detailTitle: document.getElementById("detailTitle"),
   closeDetailBtn: document.getElementById("closeDetailBtn"),
+  commentsOverlay: document.getElementById("commentsOverlay"),
+  commentsList: document.getElementById("commentsList"),
+  commentsTitle: document.getElementById("commentsTitle"),
+  closeCommentsBtn: document.getElementById("closeCommentsBtn"),
+  commentForm: document.getElementById("commentForm"),
+  commentAuthor: document.getElementById("commentAuthor"),
+  commentText: document.getElementById("commentText"),
+  commentSubmitBtn: document.getElementById("commentSubmitBtn"),
 };
+
+let commentingIssueId = null;
 
 function autoGrow(textarea) {
   textarea.style.height = "auto";
@@ -65,6 +75,9 @@ function populateNameDropdowns() {
 
   els.resolveBy.innerHTML = '<option value="" disabled selected>Please select</option>';
   appendOptions(els.resolveBy, TEAM_NAMES);
+
+  els.commentAuthor.innerHTML = '<option value="" disabled selected>Please select</option>';
+  appendOptions(els.commentAuthor, TEAM_NAMES);
 }
 
 function appendOptions(select, values) {
@@ -158,6 +171,174 @@ async function openDetailModal(row) {
 function closeDetailModal() {
   els.detailOverlay.classList.add("hidden");
   els.detailBody.innerHTML = "";
+}
+
+async function openCommentsModal(row) {
+  commentingIssueId = row.id;
+  els.commentsTitle.textContent = `Comments – Issue #${row.id}`;
+  els.commentForm.reset();
+  els.commentText.style.height = "auto";
+  els.commentsOverlay.classList.remove("hidden");
+  await loadComments();
+}
+
+function closeCommentsModal() {
+  commentingIssueId = null;
+  els.commentsOverlay.classList.add("hidden");
+  els.commentsList.innerHTML = "";
+}
+
+async function loadComments() {
+  els.commentsList.innerHTML = '<p class="comments-empty">Loading comments…</p>';
+  const { data, error } = await supabaseClient
+    .from("issue_comments")
+    .select("*")
+    .eq("issue_id", commentingIssueId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    els.commentsList.innerHTML = `<p class="comments-empty">Failed to load comments: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+
+  renderCommentsList(data || []);
+}
+
+function renderCommentsList(comments) {
+  els.commentsList.innerHTML = "";
+
+  if (!comments.length) {
+    els.commentsList.innerHTML = '<p class="comments-empty">No comments yet.</p>';
+    return;
+  }
+
+  const topLevel = comments.filter((c) => !c.parent_id);
+  const repliesByParent = {};
+  for (const c of comments) {
+    if (c.parent_id) {
+      (repliesByParent[c.parent_id] ||= []).push(c);
+    }
+  }
+
+  for (const comment of topLevel) {
+    els.commentsList.appendChild(buildCommentItem(comment, repliesByParent[comment.id] || []));
+  }
+}
+
+function commentEntryHtml(c) {
+  return `
+    <div class="comment-header">
+      <span class="comment-author">${escapeHtml(firstName(c.author) || c.author)}</span>
+      <span class="comment-time">${formatDateTime(c.created_at)}</span>
+    </div>
+    <div class="comment-text">${linkify(escapeHtml(c.comment))}</div>
+  `;
+}
+
+function buildCommentItem(comment, replies) {
+  const item = document.createElement("div");
+  item.className = "comment-item";
+  item.innerHTML = commentEntryHtml(comment);
+
+  if (replies.length) {
+    const repliesWrap = document.createElement("div");
+    repliesWrap.className = "comment-replies";
+    for (const reply of replies) {
+      const replyEl = document.createElement("div");
+      replyEl.innerHTML = commentEntryHtml(reply);
+      repliesWrap.appendChild(replyEl);
+    }
+    item.appendChild(repliesWrap);
+  }
+
+  const replyLink = document.createElement("button");
+  replyLink.type = "button";
+  replyLink.className = "comment-reply-link";
+  replyLink.textContent = "Reply";
+  replyLink.addEventListener("click", () => {
+    const existing = item.querySelector(".reply-form");
+    if (existing) {
+      existing.remove();
+      return;
+    }
+    item.appendChild(buildReplyForm(comment.id));
+  });
+  item.appendChild(replyLink);
+
+  return item;
+}
+
+function buildReplyForm(parentId) {
+  const form = document.createElement("form");
+  form.className = "reply-form";
+
+  const authorSelect = document.createElement("select");
+  authorSelect.required = true;
+  authorSelect.innerHTML = '<option value="" disabled selected>Who am I?</option>';
+  appendOptions(authorSelect, TEAM_NAMES);
+
+  const textArea = document.createElement("textarea");
+  textArea.rows = 2;
+  textArea.required = true;
+  textArea.placeholder = "Write a reply…";
+  textArea.addEventListener("input", () => autoGrow(textArea));
+
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "submit";
+  submitBtn.className = "btn primary";
+  submitBtn.textContent = "Post Reply";
+
+  form.appendChild(authorSelect);
+  form.appendChild(textArea);
+  form.appendChild(submitBtn);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    const { error } = await supabaseClient.from("issue_comments").insert({
+      issue_id: commentingIssueId,
+      parent_id: parentId,
+      author: authorSelect.value,
+      comment: textArea.value,
+    });
+    if (error) {
+      alert("Reply failed: " + error.message);
+      submitBtn.disabled = false;
+      return;
+    }
+    await loadComments();
+  });
+
+  return form;
+}
+
+async function handleCommentSubmit(event) {
+  event.preventDefault();
+  els.commentSubmitBtn.disabled = true;
+  els.commentSubmitBtn.textContent = "Posting…";
+
+  try {
+    const { error } = await supabaseClient.from("issue_comments").insert({
+      issue_id: commentingIssueId,
+      parent_id: null,
+      author: els.commentAuthor.value,
+      comment: els.commentText.value,
+    });
+
+    if (error) {
+      alert("Comment failed: " + error.message);
+      return;
+    }
+
+    els.commentForm.reset();
+    els.commentText.style.height = "auto";
+    await loadComments();
+  } catch (err) {
+    alert("Could not connect to Supabase. Are the credentials in config.js set correctly?");
+  } finally {
+    els.commentSubmitBtn.disabled = false;
+    els.commentSubmitBtn.textContent = "Post Comment";
+  }
 }
 
 function completeHistory(row, history) {
@@ -494,7 +675,7 @@ function renderTable(rows) {
     tr.appendChild(tdThumbs(row.screenshot_urls || []));
     tr.appendChild(tdName(row.owner));
     tr.appendChild(tdStatusBadge(row));
-    tr.appendChild(tdEdit(row));
+    tr.appendChild(tdActions(row));
 
     els.tableBody.appendChild(tr);
   }
@@ -618,19 +799,33 @@ function tdStatusBadge(row) {
 
 const ICON_EDIT =
   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
+const ICON_COMMENT =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>';
 
-function tdEdit(row) {
+function tdActions(row) {
   const cell = document.createElement("td");
   cell.className = "delete-cell";
 
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "icon-action-btn edit-btn";
-  btn.innerHTML = ICON_EDIT;
-  btn.title = "Edit issue";
-  btn.addEventListener("click", () => openEditModal(row));
+  const wrap = document.createElement("div");
+  wrap.className = "actions-group";
 
-  cell.appendChild(btn);
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "icon-action-btn edit-btn";
+  editBtn.innerHTML = ICON_EDIT;
+  editBtn.title = "Edit issue";
+  editBtn.addEventListener("click", () => openEditModal(row));
+  wrap.appendChild(editBtn);
+
+  const commentBtn = document.createElement("button");
+  commentBtn.type = "button";
+  commentBtn.className = "icon-action-btn comment-btn";
+  commentBtn.innerHTML = ICON_COMMENT;
+  commentBtn.title = "Comments";
+  commentBtn.addEventListener("click", () => openCommentsModal(row));
+  wrap.appendChild(commentBtn);
+
+  cell.appendChild(wrap);
   return cell;
 }
 
@@ -747,7 +942,7 @@ function initEvents() {
 
   els.lightbox.addEventListener("click", closeLightbox);
 
-  for (const ta of [els.fieldIssue, els.fieldWhy, els.resolveComment]) {
+  for (const ta of [els.fieldIssue, els.fieldWhy, els.resolveComment, els.commentText]) {
     ta.addEventListener("input", () => autoGrow(ta));
   }
 
@@ -779,6 +974,12 @@ function initEvents() {
     if (e.target === els.detailOverlay) closeDetailModal();
   });
 
+  els.commentForm.addEventListener("submit", handleCommentSubmit);
+  els.closeCommentsBtn.addEventListener("click", closeCommentsModal);
+  els.commentsOverlay.addEventListener("click", (e) => {
+    if (e.target === els.commentsOverlay) closeCommentsModal();
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeForm();
@@ -786,6 +987,7 @@ function initEvents() {
       closeResolveForm();
       closeEditModal();
       closeDetailModal();
+      closeCommentsModal();
     }
   });
 }
