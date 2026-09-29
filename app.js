@@ -602,12 +602,6 @@ function tdStatusBadge(row) {
     badge.className = "status-badge resolved";
     badge.textContent = "Resolved";
     wrap.appendChild(badge);
-
-    const meta = document.createElement("span");
-    meta.className = "status-badge neutral";
-    meta.innerHTML = resolvedMetaLines(row);
-    if (row.resolved_by) meta.title = row.resolved_by;
-    wrap.appendChild(meta);
   } else if (row.status === "in_progress") {
     badge.className = "status-badge in-progress";
     badge.textContent = "In Progress";
