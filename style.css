@@ -134,11 +134,20 @@ h1, h2 { margin: 0 0 0.5rem; font-weight: 700; letter-spacing: -0.01em; }
   font-size: 0.82rem;
 }
 
-.filter-bar .btn.icon {
-  font-size: 0.78rem;
-  padding: 0.45rem 0.7rem;
+.filter-reset-link {
+  border: none;
+  background: none;
+  padding: 0.3rem 0.2rem;
+  margin-left: 0.2rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
   color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 }
+
+.filter-reset-link:hover { color: var(--accent); }
 
 .table-wrap {
   overflow-x: auto;
