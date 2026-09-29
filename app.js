@@ -121,7 +121,7 @@ function buildEditBodyHtml(row) {
 
   if (row.status === "resolved") {
     html += '<span class="status-badge resolved">Resolved</span>';
-    html += `<div class="status-meta edit-meta">${escapeHtml(firstName(row.resolved_by) || "?")} · ${formatDateTime(row.resolved_at)}</div>`;
+    html += `<span class="status-badge neutral">${escapeHtml(firstName(row.resolved_by) || "?")} · ${formatDateTime(row.resolved_at)}</span>`;
     if (row.resolution_comment) {
       html += `<div class="cell-text edit-meta">${escapeHtml(row.resolution_comment)}</div>`;
     }
@@ -434,8 +434,8 @@ function tdStatusBadge(row) {
     badge.textContent = "Resolved";
     wrap.appendChild(badge);
 
-    const meta = document.createElement("div");
-    meta.className = "status-meta";
+    const meta = document.createElement("span");
+    meta.className = "status-badge neutral";
     meta.textContent = `${firstName(row.resolved_by) || "?"} · ${formatDateTime(row.resolved_at)}`;
     if (row.resolved_by) meta.title = row.resolved_by;
     wrap.appendChild(meta);
