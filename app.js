@@ -24,10 +24,18 @@ const els = {
   filterAgent: document.getElementById("filterAgent"),
   filterResolved: document.getElementById("filterResolved"),
   filterResetBtn: document.getElementById("filterResetBtn"),
+  resolveOverlay: document.getElementById("resolveOverlay"),
+  resolveForm: document.getElementById("resolveForm"),
+  resolveBy: document.getElementById("resolveBy"),
+  resolveComment: document.getElementById("resolveComment"),
+  resolveSubmitBtn: document.getElementById("resolveSubmitBtn"),
+  closeResolveBtn: document.getElementById("closeResolveBtn"),
+  cancelResolveBtn: document.getElementById("cancelResolveBtn"),
 };
 
 let pendingFiles = []; // File objects staged for upload on submit
 let allIssues = []; // zuletzt geladene Eintraege, ungefiltert
+let resolvingIssueId = null;
 
 function populateNameDropdowns() {
   for (const select of [els.fieldReportedBy, els.fieldOwner]) {
@@ -51,6 +59,9 @@ function populateNameDropdowns() {
   appendOptions(els.filterReportedBy, TEAM_NAMES);
   appendOptions(els.filterOwner, TEAM_NAMES);
   appendOptions(els.filterAgent, AGENT_OPTIONS);
+
+  els.resolveBy.innerHTML = '<option value="" disabled selected>Bitte wählen</option>';
+  appendOptions(els.resolveBy, TEAM_NAMES);
 }
 
 function appendOptions(select, values) {
@@ -73,6 +84,61 @@ function openForm() {
 
 function closeForm() {
   els.formOverlay.classList.add("hidden");
+}
+
+function openResolveForm(row) {
+  resolvingIssueId = row.id;
+  els.resolveForm.reset();
+  els.resolveOverlay.classList.remove("hidden");
+}
+
+function closeResolveForm() {
+  resolvingIssueId = null;
+  els.resolveOverlay.classList.add("hidden");
+}
+
+async function handleResolveSubmit(event) {
+  event.preventDefault();
+  els.resolveSubmitBtn.disabled = true;
+  els.resolveSubmitBtn.textContent = "Speichere…";
+
+  try {
+    const { error } = await supabaseClient
+      .from("issues")
+      .update({
+        resolved: true,
+        resolved_by: els.resolveBy.value,
+        resolved_at: new Date().toISOString(),
+        resolution_comment: els.resolveComment.value,
+      })
+      .eq("id", resolvingIssueId);
+
+    if (error) {
+      alert("Resolve fehlgeschlagen: " + error.message);
+      return;
+    }
+
+    closeResolveForm();
+    loadIssues();
+  } catch (err) {
+    alert("Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?");
+  } finally {
+    els.resolveSubmitBtn.disabled = false;
+    els.resolveSubmitBtn.textContent = "Resolve";
+  }
+}
+
+async function reopenIssue(id) {
+  if (!confirm("Issue wieder öffnen? Wer/wann/Kommentar gehen dabei verloren.")) return;
+  const { error } = await supabaseClient
+    .from("issues")
+    .update({ resolved: false, resolved_by: null, resolved_at: null, resolution_comment: null })
+    .eq("id", id);
+  if (error) {
+    alert("Reopen fehlgeschlagen: " + error.message);
+    return;
+  }
+  loadIssues();
 }
 
 function renderPreview() {
@@ -145,14 +211,14 @@ async function loadIssues() {
       .order("id", { ascending: true });
 
     if (error) {
-      els.tableBody.innerHTML = `<tr><td colspan="10" class="empty-state">Fehler beim Laden: ${escapeHtml(error.message)}</td></tr>`;
+      els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Fehler beim Laden: ${escapeHtml(error.message)}</td></tr>`;
       return;
     }
 
     allIssues = data || [];
     applyFilters();
   } catch (err) {
-    els.tableBody.innerHTML = `<tr><td colspan="10" class="empty-state">Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?</td></tr>`;
+    els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?</td></tr>`;
   }
 }
 
@@ -185,7 +251,7 @@ function renderTable(rows) {
     const message = allIssues.length
       ? "Keine Einträge für diese Filter."
       : 'Noch keine Einträge. Klicke oben auf "+ New Issue".';
-    els.tableBody.innerHTML = `<tr><td colspan="10" class="empty-state">${message}</td></tr>`;
+    els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">${message}</td></tr>`;
     return;
   }
 
@@ -200,8 +266,9 @@ function renderTable(rows) {
     tr.appendChild(tdText(row.why));
     tr.appendChild(td(row.agent));
     tr.appendChild(tdThumbs(row.screenshot_urls || []));
-    tr.appendChild(tdResolved(row));
     tr.appendChild(td(row.owner));
+    tr.appendChild(tdStatus(row));
+    tr.appendChild(tdText(row.resolution_comment));
     tr.appendChild(tdDelete(row.id));
 
     els.tableBody.appendChild(tr);
@@ -237,23 +304,40 @@ function tdThumbs(urls) {
   return cell;
 }
 
-function tdResolved(row) {
+function tdStatus(row) {
   const cell = document.createElement("td");
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.className = "resolved-toggle";
-  checkbox.checked = !!row.resolved;
-  checkbox.addEventListener("change", async () => {
-    const { error } = await supabaseClient
-      .from("issues")
-      .update({ resolved: checkbox.checked })
-      .eq("id", row.id);
-    if (error) {
-      alert("Konnte Status nicht speichern: " + error.message);
-      checkbox.checked = !checkbox.checked;
-    }
-  });
-  cell.appendChild(checkbox);
+
+  if (!row.resolved) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn";
+    btn.textContent = "Resolve";
+    btn.addEventListener("click", () => openResolveForm(row));
+    cell.appendChild(btn);
+    return cell;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "status-cell";
+
+  const badge = document.createElement("span");
+  badge.className = "status-badge resolved";
+  badge.textContent = "Resolved";
+  wrap.appendChild(badge);
+
+  const meta = document.createElement("div");
+  meta.className = "status-meta";
+  meta.textContent = `${row.resolved_by || "?"} · ${formatDateTime(row.resolved_at)}`;
+  wrap.appendChild(meta);
+
+  const reopenBtn = document.createElement("button");
+  reopenBtn.type = "button";
+  reopenBtn.className = "reopen-link";
+  reopenBtn.textContent = "Reopen";
+  reopenBtn.addEventListener("click", () => reopenIssue(row.id));
+  wrap.appendChild(reopenBtn);
+
+  cell.appendChild(wrap);
   return cell;
 }
 
@@ -280,6 +364,13 @@ function formatDate(isoDate) {
   if (!isoDate) return "";
   const [y, m, d] = isoDate.split("-");
   return `${d}.${m}.${y}`;
+}
+
+function formatDateTime(isoDateTime) {
+  if (!isoDateTime) return "";
+  const d = new Date(isoDateTime);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function escapeHtml(str) {
@@ -371,6 +462,13 @@ function initEvents() {
 
   els.lightbox.addEventListener("click", closeLightbox);
 
+  els.resolveForm.addEventListener("submit", handleResolveSubmit);
+  els.closeResolveBtn.addEventListener("click", closeResolveForm);
+  els.cancelResolveBtn.addEventListener("click", closeResolveForm);
+  els.resolveOverlay.addEventListener("click", (e) => {
+    if (e.target === els.resolveOverlay) closeResolveForm();
+  });
+
   for (const filterEl of [els.filterReportedBy, els.filterOwner, els.filterAgent, els.filterResolved]) {
     filterEl.addEventListener("change", applyFilters);
   }
@@ -386,6 +484,7 @@ function initEvents() {
     if (e.key === "Escape") {
       closeForm();
       closeLightbox();
+      closeResolveForm();
     }
   });
 }

@@ -12,7 +12,10 @@ create table if not exists issues (
   owner text not null,
   resolved boolean not null default false,
   screenshot_urls text[] not null default '{}',
-  agent text not null default 'COM'
+  agent text not null default 'COM',
+  resolved_by text,
+  resolved_at timestamptz,
+  resolution_comment text
 );
 
 -- Row Level Security aktivieren

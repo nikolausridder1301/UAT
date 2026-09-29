@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5" />
+<link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
 
@@ -21,8 +21,8 @@
 
 <div class="app">
   <div class="toolbar">
-    <span class="meta-label" id="entryCount"></span>
     <button id="openFormBtn" class="btn primary">+ New Issue</button>
+    <span class="meta-label" id="entryCount"></span>
   </div>
 
   <div class="filter-bar">
@@ -54,13 +54,14 @@
           <th>Why?</th>
           <th>Agent</th>
           <th>Screenshots</th>
-          <th>Resolved</th>
           <th>Owner</th>
+          <th>Status</th>
+          <th>Comment</th>
           <th></th>
         </tr>
       </thead>
       <tbody id="issueTableBody">
-        <tr><td colspan="10" class="empty-state">Lade Einträge…</td></tr>
+        <tr><td colspan="11" class="empty-state">Lade Einträge…</td></tr>
       </tbody>
     </table>
   </div>
@@ -131,8 +132,35 @@
   <img id="lightboxImg" src="" alt="Screenshot" />
 </div>
 
+<!-- Resolve Modal -->
+<div id="resolveOverlay" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Issue resolven</h2>
+      <button id="closeResolveBtn" class="btn icon">✕</button>
+    </div>
+
+    <form id="resolveForm">
+      <div class="field">
+        <label for="resolveBy">Resolved by</label>
+        <select id="resolveBy" required></select>
+      </div>
+
+      <div class="field">
+        <label for="resolveComment">Comment</label>
+        <textarea id="resolveComment" rows="3" placeholder="Wie wurde das Issue gelöst? (optional)"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="cancelResolveBtn" class="btn">Abbrechen</button>
+        <button type="submit" class="btn primary" id="resolveSubmitBtn">Resolve</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="config.js?v=5" defer></script>
-<script src="app.js?v=5" defer></script>
+<script src="config.js?v=6" defer></script>
+<script src="app.js?v=6" defer></script>
 </body>
 </html>

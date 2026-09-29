@@ -394,12 +394,6 @@ button[type="submit"].btn.primary {
   border-radius: var(--radius-sm);
 }
 
-.resolved-toggle {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
 /* Status-Badges, analog zur rot/gelb/gruen-Legende der Sparten-Tools */
 .status-badge {
   display: inline-block;
@@ -412,6 +406,27 @@ button[type="submit"].btn.primary {
 }
 .status-badge.offen { background: var(--gelb-bg); color: var(--gelb-text); }
 .status-badge.resolved { background: var(--gruen-bg); color: var(--gruen-text); }
+
+.status-cell { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
+
+.status-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.reopen-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.reopen-link:hover { color: var(--rot-text); }
 
 footer { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding-bottom: 2rem; }
 footer a { color: var(--accent); }
