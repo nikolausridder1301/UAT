@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20" />
+<link rel="stylesheet" href="style.css?v=21" />
 </head>
 <body>
 
@@ -48,16 +48,14 @@
   <div class="table-wrap">
     <table id="issueTable">
       <colgroup>
-        <col style="width: 50px" />
+        <col style="width: 60px" />
         <col style="width: 95px" />
         <col style="width: 130px" />
+        <col style="width: 340px" />
         <col style="width: 280px" />
-        <col style="width: 240px" />
-        <col style="width: 75px" />
         <col style="width: 100px" />
         <col style="width: 120px" />
         <col style="width: 140px" />
-        <col style="width: 200px" />
         <col style="width: 60px" />
       </colgroup>
       <thead>
@@ -67,16 +65,14 @@
           <th>Reported by</th>
           <th>Issue Explained</th>
           <th>Why?</th>
-          <th>Agent</th>
           <th>Screenshots</th>
           <th>Loops Owner</th>
           <th>Status</th>
-          <th>Comment</th>
           <th class="delete-cell"></th>
         </tr>
       </thead>
       <tbody id="issueTableBody">
-        <tr><td colspan="11" class="empty-state">Loading entries…</td></tr>
+        <tr><td colspan="9" class="empty-state">Loading entries…</td></tr>
       </tbody>
     </table>
   </div>
@@ -185,8 +181,19 @@
   </div>
 </div>
 
+<!-- Detail Modal -->
+<div id="detailOverlay" class="overlay hidden">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="detailTitle">Issue</h2>
+      <button id="closeDetailBtn" class="btn icon">✕</button>
+    </div>
+    <div id="detailBody" class="detail-body"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="config.js?v=20" defer></script>
-<script src="app.js?v=20" defer></script>
+<script src="config.js?v=21" defer></script>
+<script src="app.js?v=21" defer></script>
 </body>
 </html>

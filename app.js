@@ -34,6 +34,10 @@ const els = {
   editOverlay: document.getElementById("editOverlay"),
   editBody: document.getElementById("editBody"),
   closeEditBtn: document.getElementById("closeEditBtn"),
+  detailOverlay: document.getElementById("detailOverlay"),
+  detailBody: document.getElementById("detailBody"),
+  detailTitle: document.getElementById("detailTitle"),
+  closeDetailBtn: document.getElementById("closeDetailBtn"),
 };
 
 function autoGrow(textarea) {
@@ -116,6 +120,112 @@ function closeEditModal() {
   els.editBody.innerHTML = "";
 }
 
+async function logHistory(issueId, event, actor, comment) {
+  const { error } = await supabaseClient
+    .from("issue_history")
+    .insert({ issue_id: issueId, event, actor: actor || null, comment: comment || null });
+  if (error) console.error("History log failed:", error);
+}
+
+const HISTORY_LABELS = {
+  created: "Created",
+  marked_in_progress: "Marked as In Progress",
+  marked_open: "Marked as Open",
+  resolved: "Resolved",
+  reopened: "Reopened",
+};
+
+async function openDetailModal(row) {
+  els.detailTitle.textContent = `Issue #${row.id}`;
+  els.detailBody.innerHTML = '<p class="status-meta">Loading history…</p>';
+  els.detailOverlay.classList.remove("hidden");
+
+  const { data: history, error } = await supabaseClient
+    .from("issue_history")
+    .select("*")
+    .eq("issue_id", row.id)
+    .order("created_at", { ascending: false });
+
+  els.detailBody.innerHTML = buildDetailBodyHtml(row, error ? [] : history || []);
+
+  const thumbsWrap = document.getElementById("detailThumbs");
+  if (thumbsWrap) {
+    for (const url of row.screenshot_urls || []) {
+      const img = document.createElement("img");
+      img.src = url;
+      img.addEventListener("click", () => openLightbox(url));
+      thumbsWrap.appendChild(img);
+    }
+  }
+}
+
+function closeDetailModal() {
+  els.detailOverlay.classList.add("hidden");
+  els.detailBody.innerHTML = "";
+}
+
+function detailField(label, value) {
+  return `<div><div class="detail-field-label">${escapeHtml(label)}</div><div class="detail-field-value">${value}</div></div>`;
+}
+
+function buildDetailBodyHtml(row, history) {
+  const statusBadgeHtml =
+    row.status === "resolved"
+      ? '<span class="status-badge resolved">Resolved</span>'
+      : row.status === "in_progress"
+        ? '<span class="status-badge in-progress">In Progress</span>'
+        : '<span class="status-badge offen">Open</span>';
+
+  let html = '<div class="detail-meta">';
+  html += detailField("Date", escapeHtml(formatDate(row.date)));
+  html += detailField("Reported by", escapeHtml(row.reported_by));
+  html += detailField("Loops Owner", escapeHtml(row.owner));
+  html += detailField("Agent", escapeHtml(row.agent));
+  html += detailField("Status", statusBadgeHtml);
+  html += "</div>";
+
+  html += '<div class="detail-divider"></div>';
+
+  html += '<div class="detail-section"><h3>Issue Explained</h3>';
+  html += `<div class="cell-text">${linkify(escapeHtml(row.issue_explained || ""))}</div></div>`;
+
+  if (row.why) {
+    html += '<div class="detail-section"><h3>Why?</h3>';
+    html += `<div class="cell-text">${linkify(escapeHtml(row.why))}</div></div>`;
+  }
+
+  if (row.screenshot_urls && row.screenshot_urls.length) {
+    html += '<div class="detail-section"><h3>Screenshots</h3><div class="table-thumbs" id="detailThumbs"></div></div>';
+  }
+
+  if (row.status === "resolved" && row.resolution_comment) {
+    html += '<div class="detail-section"><h3>Resolution Comment</h3>';
+    html += `<div class="cell-text">${linkify(escapeHtml(row.resolution_comment))}</div></div>`;
+  }
+
+  html += '<div class="detail-divider"></div>';
+
+  html += '<div class="detail-section"><h3>Change Log</h3>';
+  if (!history.length) {
+    html += '<p class="status-meta">No history yet.</p>';
+  } else {
+    html += '<ul class="history-list">';
+    for (const h of history) {
+      const label = HISTORY_LABELS[h.event] || h.event;
+      const who = h.actor ? ` by ${escapeHtml(firstName(h.actor))}` : "";
+      html += '<li class="history-item">';
+      html += `<div class="history-event">${escapeHtml(label)}${who}</div>`;
+      html += `<div class="history-time">${formatDateTime(h.created_at)}</div>`;
+      if (h.comment) html += `<div class="history-comment">${escapeHtml(h.comment)}</div>`;
+      html += "</li>";
+    }
+    html += "</ul>";
+  }
+  html += "</div>";
+
+  return html;
+}
+
 function buildEditBodyHtml(row) {
   let html = "";
 
@@ -182,6 +292,7 @@ async function handleResolveSubmit(event) {
       return;
     }
 
+    await logHistory(resolvingIssueId, "resolved", els.resolveBy.value, els.resolveComment.value);
     closeResolveForm();
     loadIssues();
   } catch (err) {
@@ -208,6 +319,7 @@ async function reopenIssue(id) {
     alert("Reopen failed: " + error.message);
     return;
   }
+  await logHistory(id, "reopened");
   loadIssues();
 }
 
@@ -220,6 +332,7 @@ async function updateStatus(id, status) {
     alert("Update failed: " + error.message);
     return;
   }
+  await logHistory(id, status === "in_progress" ? "marked_in_progress" : "marked_open");
   closeEditModal();
   loadIssues();
 }
@@ -310,14 +423,14 @@ async function loadIssues() {
       .order("id", { ascending: true });
 
     if (error) {
-      els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Failed to load: ${escapeHtml(error.message)}</td></tr>`;
+      els.tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">Failed to load: ${escapeHtml(error.message)}</td></tr>`;
       return;
     }
 
     allIssues = data || [];
     applyFilters();
   } catch (err) {
-    els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Could not connect to Supabase. Are the credentials in config.js set correctly?</td></tr>`;
+    els.tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">Could not connect to Supabase. Are the credentials in config.js set correctly?</td></tr>`;
   }
 }
 
@@ -350,7 +463,7 @@ function renderTable(rows) {
     const message = allIssues.length
       ? "No entries match these filters."
       : 'No entries yet. Click "+ New Issue" above.';
-    els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">${message}</td></tr>`;
+    els.tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">${message}</td></tr>`;
     return;
   }
 
@@ -358,16 +471,14 @@ function renderTable(rows) {
   for (const row of rows) {
     const tr = document.createElement("tr");
 
-    tr.appendChild(td(row.id));
+    tr.appendChild(tdId(row));
     tr.appendChild(td(formatDate(row.date)));
     tr.appendChild(tdName(row.reported_by));
     tr.appendChild(tdText(row.issue_explained));
     tr.appendChild(tdText(row.why));
-    tr.appendChild(td(row.agent));
     tr.appendChild(tdThumbs(row.screenshot_urls || []));
     tr.appendChild(tdName(row.owner));
     tr.appendChild(tdStatusBadge(row));
-    tr.appendChild(tdText(row.resolution_comment));
     tr.appendChild(tdEdit(row));
 
     els.tableBody.appendChild(tr);
@@ -388,6 +499,18 @@ function tdName(fullName) {
 function td(text) {
   const cell = document.createElement("td");
   cell.textContent = text ?? "";
+  return cell;
+}
+
+function tdId(row) {
+  const cell = document.createElement("td");
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "id-link";
+  link.textContent = row.id;
+  link.title = "View issue details";
+  link.addEventListener("click", () => openDetailModal(row));
+  cell.appendChild(link);
   return cell;
 }
 
@@ -534,23 +657,28 @@ async function handleSubmit(event) {
   try {
     const screenshotUrls = await uploadScreenshots(pendingFiles);
 
-    const { error } = await supabaseClient.from("issues").insert({
-      date: els.fieldDate.value,
-      reported_by: els.fieldReportedBy.value,
-      issue_explained: els.fieldIssue.value,
-      why: els.fieldWhy.value,
-      owner: els.fieldOwner.value,
-      agent: els.fieldAgent.value,
-      resolved: false,
-      status: "open",
-      screenshot_urls: screenshotUrls,
-    });
+    const { data, error } = await supabaseClient
+      .from("issues")
+      .insert({
+        date: els.fieldDate.value,
+        reported_by: els.fieldReportedBy.value,
+        issue_explained: els.fieldIssue.value,
+        why: els.fieldWhy.value,
+        owner: els.fieldOwner.value,
+        agent: els.fieldAgent.value,
+        resolved: false,
+        status: "open",
+        screenshot_urls: screenshotUrls,
+      })
+      .select()
+      .single();
 
     if (error) {
       alert("Save failed: " + error.message);
       return;
     }
 
+    await logHistory(data.id, "created", els.fieldReportedBy.value);
     closeForm();
     loadIssues();
   } catch (err) {
@@ -637,12 +765,18 @@ function initEvents() {
     if (e.target === els.editOverlay) closeEditModal();
   });
 
+  els.closeDetailBtn.addEventListener("click", closeDetailModal);
+  els.detailOverlay.addEventListener("click", (e) => {
+    if (e.target === els.detailOverlay) closeDetailModal();
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeForm();
       closeLightbox();
       closeResolveForm();
       closeEditModal();
+      closeDetailModal();
     }
   });
 }

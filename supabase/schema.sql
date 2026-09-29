@@ -19,8 +19,25 @@ create table if not exists issues (
   status text not null default 'open' check (status in ('open', 'in_progress', 'resolved'))
 );
 
+-- Change-Log pro Issue (Resolved, Reopened, etc.)
+create table if not exists issue_history (
+  id bigint generated always as identity primary key,
+  issue_id bigint not null references issues(id) on delete cascade,
+  event text not null,
+  actor text,
+  comment text,
+  created_at timestamptz not null default now()
+);
+
 -- Row Level Security aktivieren
 alter table issues enable row level security;
+alter table issue_history enable row level security;
+
+create policy "Public read history" on issue_history
+  for select using (true);
+
+create policy "Public insert history" on issue_history
+  for insert with check (true);
 
 -- Offener Zugriff (kein Login): jeder mit dem Link darf lesen, hinzufuegen,
 -- den Resolved-Status aendern und Eintraege loeschen.
