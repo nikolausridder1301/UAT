@@ -1,0 +1,421 @@
+/* Design-System uebernommen vom Spartenrechner / Tacto-Reporting,
+   damit alle internen Tools optisch als eine Familie wirken. */
+:root {
+  color-scheme: light;
+  --bg: #e7ebf1;
+  --surface: #ffffff;
+  --border: #dce1ea;
+  --text: #161b26;
+  --text-muted: #5a6577;
+  --accent: #2563c9;
+  --accent-bg: #e7f0ff;
+  --dark: #161b26;
+  --dark-surface: #222b3a;
+  --rot: #dc2626;
+  --rot-bg: #fde3e2;
+  --rot-text: #b3261e;
+  --gelb-bg: #fdecc8;
+  --gelb-text: #92580a;
+  --gruen-bg: #dcf3e2;
+  --gruen-text: #157a3d;
+  --radius-card: 16px;
+  --radius-sm: 8px;
+  --shadow-card:
+    0 1px 2px rgba(20, 30, 50, 0.05),
+    0 8px 24px rgba(20, 30, 50, 0.06);
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--font-body);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1, h2 { margin: 0 0 0.5rem; font-weight: 700; letter-spacing: -0.01em; }
+
+.meta-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Masthead: Maximator und Loops als gleichwertige Co-Branding-Partner,
+   gleiche Bildhoehe statt einer Haupt-/Nebenlogo-Hierarchie. */
+.masthead {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.5rem;
+}
+
+.masthead-brands {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.masthead-logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.masthead-logo--loops {
+  height: 34px;
+}
+
+.masthead-divider {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.app { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: sticky;
+  top: 1rem;
+  z-index: 20;
+}
+
+.header-title { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
+.header-title h1 { margin: 0; font-size: 1.35rem; }
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  margin: 0;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--border);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.panel-header { margin-bottom: 0.75rem; }
+.panel-header h2 { margin: 0; font-size: 1.05rem; }
+
+.status-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  box-shadow: var(--shadow-card);
+}
+
+.status-box.error { background: var(--rot-bg); border-color: #f5c2c0; color: var(--rot-text); }
+
+/* ---------- Toolbar / Tabelle ---------- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 900px;
+}
+
+thead th {
+  background: var(--accent-bg);
+  color: var(--accent);
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+
+tbody td {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+  vertical-align: top;
+  max-width: 260px;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fafbfc; }
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+.cell-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn:hover { background: var(--accent-bg); border-color: var(--accent); }
+
+.btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 1px 2px rgba(20,30,50,0.08), 0 6px 16px rgba(37,99,201,0.25);
+}
+
+.btn.primary:hover { background: #1e50a8; }
+
+.btn.icon {
+  padding: 0.3rem 0.55rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--rot-text);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* ---------- Formular / Modal ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 25, 35, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.overlay.hidden { display: none; }
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.5rem 1.75rem;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.field { margin-bottom: 1.4rem; }
+
+.field label,
+#issueForm > label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.4rem;
+  color: var(--text);
+}
+
+input[type="text"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--text);
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus,
+.paste-zone:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.checkbox-label input { width: auto; }
+
+.paste-zone {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+  padding: 1.4rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.paste-zone:hover { background: var(--accent-bg); border-color: var(--accent); }
+
+.screenshot-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+.screenshot-preview .thumb-wrap {
+  position: relative;
+  width: 70px;
+  height: 70px;
+}
+
+.screenshot-preview img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.screenshot-preview .remove-thumb {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--rot);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.table-thumbs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.table-thumbs img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}
+
+button[type="submit"].btn.primary {
+  width: auto;
+}
+
+#lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: var(--radius-sm);
+}
+
+.resolved-toggle {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Status-Badges, analog zur rot/gelb/gruen-Legende der Sparten-Tools */
+.status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.status-badge.offen { background: var(--gelb-bg); color: var(--gelb-text); }
+.status-badge.resolved { background: var(--gruen-bg); color: var(--gruen-text); }
+
+footer { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding-bottom: 2rem; }
+footer a { color: var(--accent); }
+
+@media (max-width: 640px) {
+  .app { padding: 1.25rem 1rem 3rem; }
+  .panel { padding: 1rem; }
+  .app-header { flex-direction: column; align-items: flex-start; position: static; }
+  table { min-width: 700px; }
+}
