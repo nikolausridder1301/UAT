@@ -22,7 +22,7 @@ const els = {
   filterReportedBy: document.getElementById("filterReportedBy"),
   filterOwner: document.getElementById("filterOwner"),
   filterAgent: document.getElementById("filterAgent"),
-  filterResolved: document.getElementById("filterResolved"),
+  filterStatus: document.getElementById("filterStatus"),
   filterResetBtn: document.getElementById("filterResetBtn"),
   resolveOverlay: document.getElementById("resolveOverlay"),
   resolveForm: document.getElementById("resolveForm"),
@@ -31,6 +31,9 @@ const els = {
   resolveSubmitBtn: document.getElementById("resolveSubmitBtn"),
   closeResolveBtn: document.getElementById("closeResolveBtn"),
   cancelResolveBtn: document.getElementById("cancelResolveBtn"),
+  editOverlay: document.getElementById("editOverlay"),
+  editBody: document.getElementById("editBody"),
+  closeEditBtn: document.getElementById("closeEditBtn"),
 };
 
 function autoGrow(textarea) {
@@ -102,6 +105,61 @@ function closeResolveForm() {
   els.resolveOverlay.classList.add("hidden");
 }
 
+function openEditModal(row) {
+  els.editBody.innerHTML = buildEditBodyHtml(row);
+  wireEditBodyEvents(row);
+  els.editOverlay.classList.remove("hidden");
+}
+
+function closeEditModal() {
+  els.editOverlay.classList.add("hidden");
+  els.editBody.innerHTML = "";
+}
+
+function buildEditBodyHtml(row) {
+  let html = "";
+
+  if (row.status === "resolved") {
+    html += '<span class="status-badge resolved">Resolved</span>';
+    html += `<div class="status-meta edit-meta">${escapeHtml(firstName(row.resolved_by) || "?")} · ${formatDateTime(row.resolved_at)}</div>`;
+    if (row.resolution_comment) {
+      html += `<div class="cell-text edit-meta">${escapeHtml(row.resolution_comment)}</div>`;
+    }
+    html += '<button type="button" id="editReopenBtn" class="btn">Reopen Issue</button>';
+  } else {
+    html +=
+      row.status === "in_progress"
+        ? '<span class="status-badge in-progress">In Progress</span>'
+        : '<span class="status-badge offen">Open</span>';
+
+    html +=
+      row.status === "in_progress"
+        ? '<button type="button" id="editOpenBtn" class="btn">Mark as Open</button>'
+        : '<button type="button" id="editInProgressBtn" class="btn">Mark as In Progress</button>';
+
+    html += '<button type="button" id="editResolveBtn" class="btn primary">Resolve Issue</button>';
+  }
+
+  html += '<div class="edit-divider"></div>';
+  html += '<button type="button" id="editDeleteBtn" class="btn danger">Delete Issue</button>';
+
+  return html;
+}
+
+function wireEditBodyEvents(row) {
+  document.getElementById("editInProgressBtn")?.addEventListener("click", () => updateStatus(row.id, "in_progress"));
+  document.getElementById("editOpenBtn")?.addEventListener("click", () => updateStatus(row.id, "open"));
+  document.getElementById("editResolveBtn")?.addEventListener("click", () => {
+    closeEditModal();
+    openResolveForm(row);
+  });
+  document.getElementById("editReopenBtn")?.addEventListener("click", () => {
+    closeEditModal();
+    reopenIssue(row.id);
+  });
+  document.getElementById("editDeleteBtn")?.addEventListener("click", () => deleteIssue(row.id));
+}
+
 async function handleResolveSubmit(event) {
   event.preventDefault();
   els.resolveSubmitBtn.disabled = true;
@@ -112,6 +170,7 @@ async function handleResolveSubmit(event) {
       .from("issues")
       .update({
         resolved: true,
+        status: "resolved",
         resolved_by: els.resolveBy.value,
         resolved_at: new Date().toISOString(),
         resolution_comment: els.resolveComment.value,
@@ -137,12 +196,47 @@ async function reopenIssue(id) {
   if (!confirm("Reopen this issue? Who/when/comment will be lost.")) return;
   const { error } = await supabaseClient
     .from("issues")
-    .update({ resolved: false, resolved_by: null, resolved_at: null, resolution_comment: null })
+    .update({
+      resolved: false,
+      status: "open",
+      resolved_by: null,
+      resolved_at: null,
+      resolution_comment: null,
+    })
     .eq("id", id);
   if (error) {
     alert("Reopen failed: " + error.message);
     return;
   }
+  loadIssues();
+}
+
+async function updateStatus(id, status) {
+  const { error } = await supabaseClient
+    .from("issues")
+    .update({ status, resolved: status === "resolved" })
+    .eq("id", id);
+  if (error) {
+    alert("Update failed: " + error.message);
+    return;
+  }
+  closeEditModal();
+  loadIssues();
+}
+
+async function deleteIssue(id) {
+  if (
+    !confirm(
+      "Are you sure you want to delete this issue? Once deleted, it's gone for good and cannot be recovered."
+    )
+  )
+    return;
+  const { error } = await supabaseClient.from("issues").delete().eq("id", id);
+  if (error) {
+    alert("Delete failed: " + error.message);
+    return;
+  }
+  closeEditModal();
   loadIssues();
 }
 
@@ -231,14 +325,14 @@ function applyFilters() {
   const reportedBy = els.filterReportedBy.value;
   const owner = els.filterOwner.value;
   const agent = els.filterAgent.value;
-  const resolved = els.filterResolved.value;
+  const status = els.filterStatus.value;
 
   const filtered = allIssues.filter((row) => {
     if (reportedBy && row.reported_by !== reportedBy) return false;
     if (owner && row.owner !== owner) return false;
     if (agent && row.agent !== agent) return false;
-    if (resolved === "open" && row.resolved) return false;
-    if (resolved === "resolved" && !row.resolved) return false;
+    if (status === "not_resolved" && row.status === "resolved") return false;
+    if (status && status !== "not_resolved" && row.status !== status) return false;
     return true;
   });
 
@@ -274,7 +368,7 @@ function renderTable(rows) {
     tr.appendChild(tdName(row.owner));
     tr.appendChild(tdStatusBadge(row));
     tr.appendChild(tdText(row.resolution_comment));
-    tr.appendChild(tdActions(row));
+    tr.appendChild(tdEdit(row));
 
     els.tableBody.appendChild(tr);
   }
@@ -300,8 +394,17 @@ function td(text) {
 function tdText(text) {
   const cell = document.createElement("td");
   const span = document.createElement("div");
-  span.className = "cell-text";
-  span.textContent = text ?? "";
+  const value = text ?? "";
+  const isLong = value.length > 150 || (value.match(/\n/g) || []).length > 2;
+
+  span.className = isLong ? "cell-text truncatable" : "cell-text";
+  span.textContent = value;
+
+  if (isLong) {
+    span.title = "Click to expand";
+    span.addEventListener("click", () => span.classList.toggle("expanded"));
+  }
+
   cell.appendChild(span);
   return cell;
 }
@@ -326,7 +429,7 @@ function tdStatusBadge(row) {
   wrap.className = "status-cell";
 
   const badge = document.createElement("span");
-  if (row.resolved) {
+  if (row.status === "resolved") {
     badge.className = "status-badge resolved";
     badge.textContent = "Resolved";
     wrap.appendChild(badge);
@@ -336,6 +439,10 @@ function tdStatusBadge(row) {
     meta.textContent = `${firstName(row.resolved_by) || "?"} · ${formatDateTime(row.resolved_at)}`;
     if (row.resolved_by) meta.title = row.resolved_by;
     wrap.appendChild(meta);
+  } else if (row.status === "in_progress") {
+    badge.className = "status-badge in-progress";
+    badge.textContent = "In Progress";
+    wrap.appendChild(badge);
   } else {
     badge.className = "status-badge offen";
     badge.textContent = "Open";
@@ -346,53 +453,21 @@ function tdStatusBadge(row) {
   return cell;
 }
 
-const ICON_CHECK =
-  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-const ICON_REOPEN =
-  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
-const ICON_DELETE =
-  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+const ICON_EDIT =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
 
-function iconButton(icon, title, extraClass, onClick) {
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = `icon-action-btn ${extraClass}`;
-  btn.innerHTML = icon;
-  btn.title = title;
-  btn.addEventListener("click", onClick);
-  return btn;
-}
-
-function tdActions(row) {
+function tdEdit(row) {
   const cell = document.createElement("td");
   cell.className = "delete-cell";
 
-  const wrap = document.createElement("div");
-  wrap.className = "actions-group";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "icon-action-btn edit-btn";
+  btn.innerHTML = ICON_EDIT;
+  btn.title = "Edit issue";
+  btn.addEventListener("click", () => openEditModal(row));
 
-  if (row.resolved) {
-    wrap.appendChild(
-      iconButton(ICON_REOPEN, "Reopen issue", "reopen-btn", () => reopenIssue(row.id))
-    );
-  } else {
-    wrap.appendChild(
-      iconButton(ICON_CHECK, "Resolve issue", "resolve-btn", () => openResolveForm(row))
-    );
-  }
-
-  wrap.appendChild(
-    iconButton(ICON_DELETE, "Delete entry", "delete-btn", async () => {
-      if (!confirm("Really delete this entry?")) return;
-      const { error } = await supabaseClient.from("issues").delete().eq("id", row.id);
-      if (error) {
-        alert("Delete failed: " + error.message);
-        return;
-      }
-      loadIssues();
-    })
-  );
-
-  cell.appendChild(wrap);
+  cell.appendChild(btn);
   return cell;
 }
 
@@ -431,6 +506,7 @@ async function handleSubmit(event) {
       owner: els.fieldOwner.value,
       agent: els.fieldAgent.value,
       resolved: false,
+      status: "open",
       screenshot_urls: screenshotUrls,
     });
 
@@ -509,15 +585,20 @@ function initEvents() {
     if (e.target === els.resolveOverlay) closeResolveForm();
   });
 
-  for (const filterEl of [els.filterReportedBy, els.filterOwner, els.filterAgent, els.filterResolved]) {
+  for (const filterEl of [els.filterReportedBy, els.filterOwner, els.filterAgent, els.filterStatus]) {
     filterEl.addEventListener("change", applyFilters);
   }
   els.filterResetBtn.addEventListener("click", () => {
     els.filterReportedBy.value = "";
     els.filterOwner.value = "";
     els.filterAgent.value = "";
-    els.filterResolved.value = "open"; // Standardansicht: resolved bleibt ausgeblendet
+    els.filterStatus.value = "not_resolved"; // Standardansicht: resolved bleibt ausgeblendet
     applyFilters();
+  });
+
+  els.closeEditBtn.addEventListener("click", closeEditModal);
+  els.editOverlay.addEventListener("click", (e) => {
+    if (e.target === els.editOverlay) closeEditModal();
   });
 
   document.addEventListener("keydown", (e) => {
@@ -525,6 +606,7 @@ function initEvents() {
       closeForm();
       closeLightbox();
       closeResolveForm();
+      closeEditModal();
     }
   });
 }

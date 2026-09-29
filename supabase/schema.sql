@@ -15,7 +15,8 @@ create table if not exists issues (
   agent text not null default 'COM',
   resolved_by text,
   resolved_at timestamptz,
-  resolution_comment text
+  resolution_comment text,
+  status text not null default 'open' check (status in ('open', 'in_progress', 'resolved'))
 );
 
 -- Row Level Security aktivieren
