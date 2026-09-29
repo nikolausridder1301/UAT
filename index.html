@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3" />
+<link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
 
@@ -36,9 +36,9 @@
       <option value="">Agent: Alle</option>
     </select>
     <select id="filterResolved">
-      <option value="">Resolved: Alle</option>
-      <option value="open">Nur offen</option>
-      <option value="resolved">Nur resolved</option>
+      <option value="">Resolved: All</option>
+      <option value="resolved">Resolved</option>
+      <option value="open" selected>Not Resolved</option>
     </select>
     <button type="button" id="filterResetBtn" class="btn icon" title="Filter zurücksetzen">Filter zurücksetzen</button>
   </div>
@@ -110,13 +110,6 @@
       </div>
 
       <div class="field">
-        <label class="checkbox-label">
-          <input type="checkbox" id="fieldResolved" />
-          Resolved
-        </label>
-      </div>
-
-      <div class="field">
         <label>Screenshots</label>
         <div id="pasteZone" class="paste-zone" tabindex="0">
           Screenshot hier einfügen (Strg+V) oder klicken zum Auswählen
@@ -139,7 +132,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="config.js?v=3" defer></script>
-<script src="app.js?v=3" defer></script>
+<script src="config.js?v=4" defer></script>
+<script src="app.js?v=4" defer></script>
 </body>
 </html>

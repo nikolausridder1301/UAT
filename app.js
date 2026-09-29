@@ -13,7 +13,6 @@ const els = {
   fieldWhy: document.getElementById("fieldWhy"),
   fieldOwner: document.getElementById("fieldOwner"),
   fieldAgent: document.getElementById("fieldAgent"),
-  fieldResolved: document.getElementById("fieldResolved"),
   pasteZone: document.getElementById("pasteZone"),
   fileInput: document.getElementById("fileInput"),
   screenshotPreview: document.getElementById("screenshotPreview"),
@@ -304,7 +303,7 @@ async function handleSubmit(event) {
       why: els.fieldWhy.value,
       owner: els.fieldOwner.value,
       agent: els.fieldAgent.value,
-      resolved: els.fieldResolved.checked,
+      resolved: false,
       screenshot_urls: screenshotUrls,
     });
 
@@ -379,7 +378,7 @@ function initEvents() {
     els.filterReportedBy.value = "";
     els.filterOwner.value = "";
     els.filterAgent.value = "";
-    els.filterResolved.value = "";
+    els.filterResolved.value = "open"; // Standardansicht: resolved bleibt ausgeblendet
     applyFilters();
   });
 

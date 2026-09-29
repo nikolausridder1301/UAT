@@ -303,15 +303,6 @@ textarea:focus,
   outline-offset: 1px;
 }
 
-.checkbox-label {
-  display: flex !important;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-}
-
-.checkbox-label input { width: auto; }
-
 .paste-zone {
   border: 1px dashed var(--border);
   border-radius: var(--radius-card);
