@@ -57,12 +57,7 @@ function populateNameDropdowns() {
   appendOptions(els.fieldOwner, LOOPS_OWNERS);
 
   els.fieldAgent.innerHTML = "";
-  for (const agent of AGENT_OPTIONS) {
-    const opt = document.createElement("option");
-    opt.value = agent;
-    opt.textContent = agent;
-    els.fieldAgent.appendChild(opt);
-  }
+  appendOptions(els.fieldAgent, AGENT_OPTIONS);
 
   appendOptions(els.filterReportedBy, TEAM_NAMES);
   appendOptions(els.filterOwner, LOOPS_OWNERS);
@@ -73,7 +68,8 @@ function populateNameDropdowns() {
 }
 
 function appendOptions(select, values) {
-  for (const value of values) {
+  const sorted = [...values].sort((a, b) => a.localeCompare(b));
+  for (const value of sorted) {
     const opt = document.createElement("option");
     opt.value = value;
     opt.textContent = value;

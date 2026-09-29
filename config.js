@@ -8,7 +8,8 @@
 const SUPABASE_URL = "https://cwonqyonwuxaryotcsms.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VwvZYi5QR0pjn5m_3nEsrA_SnBPet-9";
 
-// Namen für das Dropdown "Reported by". Einfach hier ergänzen/ändern.
+// Namen für das Dropdown "Reported by". Einfach hier ergänzen/ändern -
+// Reihenfolge ist egal, die Dropdowns sortieren automatisch alphabetisch.
 const TEAM_NAMES = [
   "Nikolaus Ridder",
   "Jens Semmer",
