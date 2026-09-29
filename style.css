@@ -476,7 +476,12 @@ button[type="submit"].btn.primary {
 .status-badge.offen { background: var(--gelb-bg); color: var(--gelb-text); }
 .status-badge.resolved { background: var(--gruen-bg); color: var(--gruen-text); }
 .status-badge.in-progress { background: var(--lila-bg); color: var(--lila-text); }
-.status-badge.neutral { background: var(--bg); color: var(--text-muted); font-weight: 500; }
+.status-badge.neutral {
+  background: var(--bg);
+  color: var(--text-muted);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
 
 .status-cell { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
 
