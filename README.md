@@ -45,6 +45,13 @@ können dort einfach ergänzt werden.
 - Klick auf ein Screenshot-Thumbnail öffnet es in groß.
 - 🗑 löscht einen Eintrag (mit Sicherheitsabfrage).
 
+## Nach jedem Deploy: Versionsnummer hochzählen
+
+`style.css` und `app.js` werden in [`index.html`](index.html) mit einem
+`?v=3`-Suffix eingebunden, damit Browser nach einem Update nicht versehentlich
+eine alte, gecachte Version anzeigen. Bei sichtbaren CSS/JS-Änderungen die
+Zahl in beiden `<script>`/`<link>`-Tags um eins erhöhen.
+
 ## Lokal testen
 
 Da die App reines statisches HTML/JS ist, reicht ein einfacher lokaler
