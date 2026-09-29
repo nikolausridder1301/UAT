@@ -8,7 +8,7 @@
 const SUPABASE_URL = "https://cwonqyonwuxaryotcsms.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VwvZYi5QR0pjn5m_3nEsrA_SnBPet-9";
 
-// Namen für die Dropdowns "Reported by" / "Owner". Einfach hier ergänzen/ändern.
+// Namen für das Dropdown "Reported by". Einfach hier ergänzen/ändern.
 const TEAM_NAMES = [
   "Nikolaus Ridder",
   "Jens Semmer",
@@ -25,6 +25,9 @@ const TEAM_NAMES = [
   "Christopher Keil",
   "Maik Sauerbier",
 ];
+
+// Namen für das Dropdown "Loops Owner" - nur das Loops-Team.
+const LOOPS_OWNERS = ["Emily Carnall", "Huriyyah Dhanse", "Mohan Achar", "Prateek Jain", "Ruiyan Zhu"];
 
 // Auswahlmöglichkeiten für das Feld "Agent". Aktuell nur "COM",
 // weitere Module/Systeme können hier einfach ergänzt werden.

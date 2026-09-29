@@ -43,15 +43,11 @@ let allIssues = []; // zuletzt geladene Eintraege, ungefiltert
 let resolvingIssueId = null;
 
 function populateNameDropdowns() {
-  for (const select of [els.fieldReportedBy, els.fieldOwner]) {
-    select.innerHTML = "";
-    for (const name of TEAM_NAMES) {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      select.appendChild(opt);
-    }
-  }
+  els.fieldReportedBy.innerHTML = "";
+  appendOptions(els.fieldReportedBy, TEAM_NAMES);
+
+  els.fieldOwner.innerHTML = "";
+  appendOptions(els.fieldOwner, LOOPS_OWNERS);
 
   els.fieldAgent.innerHTML = "";
   for (const agent of AGENT_OPTIONS) {
@@ -62,7 +58,7 @@ function populateNameDropdowns() {
   }
 
   appendOptions(els.filterReportedBy, TEAM_NAMES);
-  appendOptions(els.filterOwner, TEAM_NAMES);
+  appendOptions(els.filterOwner, LOOPS_OWNERS);
   appendOptions(els.filterAgent, AGENT_OPTIONS);
 
   els.resolveBy.innerHTML = '<option value="" disabled selected>Please select</option>';
