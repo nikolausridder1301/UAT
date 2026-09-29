@@ -303,6 +303,11 @@ textarea {
   color: var(--text);
 }
 
+textarea {
+  resize: none;
+  overflow: hidden;
+}
+
 input[type="text"]:focus,
 input[type="date"]:focus,
 select:focus,

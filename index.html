@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UAT Issue Log – Maximator</title>
+<title>IFS Loops Issue Log · Maximator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=6" />
+<link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 
@@ -27,20 +27,20 @@
 
   <div class="filter-bar">
     <select id="filterReportedBy">
-      <option value="">Reported by: Alle</option>
+      <option value="">Reported by: All</option>
     </select>
     <select id="filterOwner">
-      <option value="">Owner: Alle</option>
+      <option value="">Owner: All</option>
     </select>
     <select id="filterAgent">
-      <option value="">Agent: Alle</option>
+      <option value="">Agent: All</option>
     </select>
     <select id="filterResolved">
       <option value="">Resolved: All</option>
       <option value="resolved">Resolved</option>
       <option value="open" selected>Not Resolved</option>
     </select>
-    <button type="button" id="filterResetBtn" class="filter-reset-link">Filter zurücksetzen</button>
+    <button type="button" id="filterResetBtn" class="filter-reset-link">Reset filters</button>
   </div>
 
   <div class="table-wrap">
@@ -48,7 +48,7 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>Datum</th>
+          <th>Date</th>
           <th>Reported by</th>
           <th>Issue Explained</th>
           <th>Why?</th>
@@ -61,27 +61,27 @@
         </tr>
       </thead>
       <tbody id="issueTableBody">
-        <tr><td colspan="11" class="empty-state">Lade Einträge…</td></tr>
+        <tr><td colspan="11" class="empty-state">Loading entries…</td></tr>
       </tbody>
     </table>
   </div>
 
   <footer>
-    <p>UAT Issue Log &middot; Maximator</p>
+    <p>IFS Loops Issue Log &middot; Maximator</p>
   </footer>
 </div>
 
-<!-- Formular Modal -->
+<!-- New Issue Modal -->
 <div id="formOverlay" class="overlay hidden">
   <div class="modal">
     <div class="modal-header">
-      <h2>Neuer Issue</h2>
+      <h2>New Issue</h2>
       <button id="closeFormBtn" class="btn icon">✕</button>
     </div>
 
     <form id="issueForm">
       <div class="field">
-        <label for="fieldDate">Datum</label>
+        <label for="fieldDate">Date</label>
         <input type="date" id="fieldDate" required />
       </div>
 
@@ -92,12 +92,12 @@
 
       <div class="field">
         <label for="fieldIssue">Issue Explained</label>
-        <textarea id="fieldIssue" rows="4" required placeholder="Was ist das Problem?"></textarea>
+        <textarea id="fieldIssue" rows="4" required placeholder="What's the problem?"></textarea>
       </div>
 
       <div class="field">
         <label for="fieldWhy">Why?</label>
-        <textarea id="fieldWhy" rows="3" placeholder="Warum ist das relevant? (optional)"></textarea>
+        <textarea id="fieldWhy" rows="3" placeholder="Why is this relevant? (optional)"></textarea>
       </div>
 
       <div class="field">
@@ -113,15 +113,15 @@
       <div class="field">
         <label>Screenshots</label>
         <div id="pasteZone" class="paste-zone" tabindex="0">
-          Screenshot hier einfügen (Strg+V) oder klicken zum Auswählen
+          Paste a screenshot here (Ctrl+V) or click to select a file
           <input type="file" id="fileInput" accept="image/*" multiple hidden />
         </div>
         <div id="screenshotPreview" class="screenshot-preview"></div>
       </div>
 
       <div class="form-actions">
-        <button type="button" id="cancelFormBtn" class="btn">Abbrechen</button>
-        <button type="submit" class="btn primary" id="submitBtn">Speichern</button>
+        <button type="button" id="cancelFormBtn" class="btn">Cancel</button>
+        <button type="submit" class="btn primary" id="submitBtn">Save</button>
       </div>
     </form>
   </div>
@@ -136,7 +136,7 @@
 <div id="resolveOverlay" class="overlay hidden">
   <div class="modal">
     <div class="modal-header">
-      <h2>Issue resolven</h2>
+      <h2>Resolve Issue</h2>
       <button id="closeResolveBtn" class="btn icon">✕</button>
     </div>
 
@@ -148,11 +148,11 @@
 
       <div class="field">
         <label for="resolveComment">Comment</label>
-        <textarea id="resolveComment" rows="3" placeholder="Wie wurde das Issue gelöst? (optional)"></textarea>
+        <textarea id="resolveComment" rows="3" placeholder="How was this issue resolved? (optional)"></textarea>
       </div>
 
       <div class="form-actions">
-        <button type="button" id="cancelResolveBtn" class="btn">Abbrechen</button>
+        <button type="button" id="cancelResolveBtn" class="btn">Cancel</button>
         <button type="submit" class="btn primary" id="resolveSubmitBtn">Resolve</button>
       </div>
     </form>
@@ -160,7 +160,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="config.js?v=6" defer></script>
-<script src="app.js?v=6" defer></script>
+<script src="config.js?v=7" defer></script>
+<script src="app.js?v=7" defer></script>
 </body>
 </html>

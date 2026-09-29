@@ -33,6 +33,11 @@ const els = {
   cancelResolveBtn: document.getElementById("cancelResolveBtn"),
 };
 
+function autoGrow(textarea) {
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
 let pendingFiles = []; // File objects staged for upload on submit
 let allIssues = []; // zuletzt geladene Eintraege, ungefiltert
 let resolvingIssueId = null;
@@ -60,7 +65,7 @@ function populateNameDropdowns() {
   appendOptions(els.filterOwner, TEAM_NAMES);
   appendOptions(els.filterAgent, AGENT_OPTIONS);
 
-  els.resolveBy.innerHTML = '<option value="" disabled selected>Bitte wählen</option>';
+  els.resolveBy.innerHTML = '<option value="" disabled selected>Please select</option>';
   appendOptions(els.resolveBy, TEAM_NAMES);
 }
 
@@ -80,6 +85,9 @@ function openForm() {
   renderPreview();
   els.formOverlay.classList.remove("hidden");
   els.fieldIssue.focus();
+  for (const ta of [els.fieldIssue, els.fieldWhy]) {
+    ta.style.height = "auto";
+  }
 }
 
 function closeForm() {
@@ -90,6 +98,7 @@ function openResolveForm(row) {
   resolvingIssueId = row.id;
   els.resolveForm.reset();
   els.resolveOverlay.classList.remove("hidden");
+  els.resolveComment.style.height = "auto";
 }
 
 function closeResolveForm() {
@@ -100,7 +109,7 @@ function closeResolveForm() {
 async function handleResolveSubmit(event) {
   event.preventDefault();
   els.resolveSubmitBtn.disabled = true;
-  els.resolveSubmitBtn.textContent = "Speichere…";
+  els.resolveSubmitBtn.textContent = "Saving…";
 
   try {
     const { error } = await supabaseClient
@@ -114,14 +123,14 @@ async function handleResolveSubmit(event) {
       .eq("id", resolvingIssueId);
 
     if (error) {
-      alert("Resolve fehlgeschlagen: " + error.message);
+      alert("Resolve failed: " + error.message);
       return;
     }
 
     closeResolveForm();
     loadIssues();
   } catch (err) {
-    alert("Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?");
+    alert("Could not connect to Supabase. Are the credentials in config.js set correctly?");
   } finally {
     els.resolveSubmitBtn.disabled = false;
     els.resolveSubmitBtn.textContent = "Resolve";
@@ -129,13 +138,13 @@ async function handleResolveSubmit(event) {
 }
 
 async function reopenIssue(id) {
-  if (!confirm("Issue wieder öffnen? Wer/wann/Kommentar gehen dabei verloren.")) return;
+  if (!confirm("Reopen this issue? Who/when/comment will be lost.")) return;
   const { error } = await supabaseClient
     .from("issues")
     .update({ resolved: false, resolved_by: null, resolved_at: null, resolution_comment: null })
     .eq("id", id);
   if (error) {
-    alert("Reopen fehlgeschlagen: " + error.message);
+    alert("Reopen failed: " + error.message);
     return;
   }
   loadIssues();
@@ -193,8 +202,8 @@ async function uploadScreenshots(files) {
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabaseClient.storage.from("screenshots").upload(path, file);
     if (error) {
-      console.error("Upload-Fehler:", error);
-      alert("Ein Screenshot konnte nicht hochgeladen werden: " + error.message);
+      console.error("Upload error:", error);
+      alert("A screenshot could not be uploaded: " + error.message);
       continue;
     }
     const { data } = supabaseClient.storage.from("screenshots").getPublicUrl(path);
@@ -211,14 +220,14 @@ async function loadIssues() {
       .order("id", { ascending: true });
 
     if (error) {
-      els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Fehler beim Laden: ${escapeHtml(error.message)}</td></tr>`;
+      els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Failed to load: ${escapeHtml(error.message)}</td></tr>`;
       return;
     }
 
     allIssues = data || [];
     applyFilters();
   } catch (err) {
-    els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?</td></tr>`;
+    els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">Could not connect to Supabase. Are the credentials in config.js set correctly?</td></tr>`;
   }
 }
 
@@ -243,14 +252,14 @@ function applyFilters() {
 function renderTable(rows) {
   const countEl = document.getElementById("entryCount");
   if (countEl) {
-    const suffix = rows.length !== allIssues.length ? ` von ${allIssues.length}` : "";
-    countEl.textContent = allIssues.length ? `${rows.length}${suffix} Einträge` : "";
+    const suffix = rows.length !== allIssues.length ? ` of ${allIssues.length}` : "";
+    countEl.textContent = allIssues.length ? `${rows.length}${suffix} entries` : "";
   }
 
   if (!rows || rows.length === 0) {
     const message = allIssues.length
-      ? "Keine Einträge für diese Filter."
-      : 'Noch keine Einträge. Klicke oben auf "+ New Issue".';
+      ? "No entries match these filters."
+      : 'No entries yet. Click "+ New Issue" above.';
     els.tableBody.innerHTML = `<tr><td colspan="11" class="empty-state">${message}</td></tr>`;
     return;
   }
@@ -346,12 +355,12 @@ function tdDelete(id) {
   const btn = document.createElement("button");
   btn.className = "delete-btn";
   btn.textContent = "🗑";
-  btn.title = "Eintrag löschen";
+  btn.title = "Delete entry";
   btn.addEventListener("click", async () => {
-    if (!confirm("Diesen Eintrag wirklich löschen?")) return;
+    if (!confirm("Really delete this entry?")) return;
     const { error } = await supabaseClient.from("issues").delete().eq("id", id);
     if (error) {
-      alert("Löschen fehlgeschlagen: " + error.message);
+      alert("Delete failed: " + error.message);
       return;
     }
     loadIssues();
@@ -382,7 +391,7 @@ function escapeHtml(str) {
 async function handleSubmit(event) {
   event.preventDefault();
   els.submitBtn.disabled = true;
-  els.submitBtn.textContent = "Speichere…";
+  els.submitBtn.textContent = "Saving…";
 
   try {
     const screenshotUrls = await uploadScreenshots(pendingFiles);
@@ -399,17 +408,17 @@ async function handleSubmit(event) {
     });
 
     if (error) {
-      alert("Speichern fehlgeschlagen: " + error.message);
+      alert("Save failed: " + error.message);
       return;
     }
 
     closeForm();
     loadIssues();
   } catch (err) {
-    alert("Verbindung zu Supabase fehlgeschlagen. Sind die Zugangsdaten in config.js korrekt hinterlegt?");
+    alert("Could not connect to Supabase. Are the credentials in config.js set correctly?");
   } finally {
     els.submitBtn.disabled = false;
-    els.submitBtn.textContent = "Speichern";
+    els.submitBtn.textContent = "Save";
   }
 }
 
@@ -461,6 +470,10 @@ function initEvents() {
   });
 
   els.lightbox.addEventListener("click", closeLightbox);
+
+  for (const ta of [els.fieldIssue, els.fieldWhy, els.resolveComment]) {
+    ta.addEventListener("input", () => autoGrow(ta));
+  }
 
   els.resolveForm.addEventListener("submit", handleResolveSubmit);
   els.closeResolveBtn.addEventListener("click", closeResolveForm);
