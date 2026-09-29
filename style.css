@@ -205,23 +205,15 @@ tbody tr:hover { background: #fafbfc; }
   text-decoration: underline;
 }
 
-.cell-text.truncatable {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  overflow: hidden;
+.show-more-link {
+  display: inline;
+  font-style: italic;
+  color: var(--accent);
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.cell-text.truncatable:hover { color: var(--accent); }
-
-.cell-text.expanded {
-  display: block;
-  -webkit-line-clamp: unset;
-  line-clamp: unset;
-  overflow: visible;
-}
+.show-more-link:hover { text-decoration: underline; }
 
 /* ---------- Buttons ---------- */
 

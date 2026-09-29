@@ -398,24 +398,45 @@ function linkify(escapedText) {
   );
 }
 
+const TRUNCATE_LENGTH = 150;
+
 function tdText(text) {
   const cell = document.createElement("td");
-  const span = document.createElement("div");
+  const wrap = document.createElement("div");
+  wrap.className = "cell-text";
   const value = text ?? "";
-  const isLong = value.length > 150 || (value.match(/\n/g) || []).length > 2;
+  const isLong = value.length > TRUNCATE_LENGTH || (value.match(/\n/g) || []).length > 2;
 
-  span.className = isLong ? "cell-text truncatable" : "cell-text";
-  span.innerHTML = linkify(escapeHtml(value));
-
-  if (isLong) {
-    span.title = "Click to expand";
-    span.addEventListener("click", (e) => {
-      if (e.target.closest("a")) return;
-      span.classList.toggle("expanded");
-    });
+  if (!isLong) {
+    wrap.innerHTML = linkify(escapeHtml(value));
+    cell.appendChild(wrap);
+    return cell;
   }
 
-  cell.appendChild(span);
+  const textPart = document.createElement("span");
+  const toggleLink = document.createElement("span");
+  toggleLink.className = "show-more-link";
+
+  let expanded = false;
+  const render = () => {
+    if (expanded) {
+      textPart.innerHTML = linkify(escapeHtml(value)) + " ";
+      toggleLink.textContent = "show less";
+    } else {
+      textPart.innerHTML = linkify(escapeHtml(value.slice(0, TRUNCATE_LENGTH).trimEnd())) + "… ";
+      toggleLink.textContent = "show more";
+    }
+  };
+  render();
+
+  toggleLink.addEventListener("click", () => {
+    expanded = !expanded;
+    render();
+  });
+
+  wrap.appendChild(textPart);
+  wrap.appendChild(toggleLink);
+  cell.appendChild(wrap);
   return cell;
 }
 
